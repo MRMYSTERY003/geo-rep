@@ -153,7 +153,6 @@ function stopWebcam() {
     stream = null;
   }
 }
-
 // 🔹 Capture Image from Webcam
 captureBtn.addEventListener("click", async () => {
   await startWebcam();
@@ -165,17 +164,14 @@ captureBtn.addEventListener("click", async () => {
 
     const base64Image = canvas.toDataURL("image/png");
 
-    // Get Current Date, Time, and Location
     capturedData = {
       dateTime: new Date().toISOString(),
       location: { latitude: 0, longitude: 0 },
       imageBase64: base64Image
     };
 
-    // Display Captured Image
     imageContainer.innerHTML = `<img src="${base64Image}" style="width:200px; border:2px solid black;">`;
 
-    // Stop Webcam After Capture
     stopWebcam();
 
     // Get User Location
@@ -192,7 +188,42 @@ captureBtn.addEventListener("click", async () => {
   }, 500);
 });
 
-// 🔹 Upload Captured Image and Location to Firestore
+// 🔹 Upload File and Convert to Base64
+document.getElementById("image-input").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const base64Image = e.target.result;
+
+      capturedData = {
+        dateTime: new Date().toISOString(),
+        location: { latitude: 0, longitude: 0 },
+        imageBase64: base64Image
+      };
+
+      imageContainer.innerHTML = `<img src="${base64Image}" style="width:200px; border:2px solid black;">`;
+
+            // Get User Location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          capturedData.location.latitude = position.coords.latitude;
+          capturedData.location.longitude = position.coords.longitude;
+          captureInfo.innerHTML = `<p><strong>Captured at:</strong> ${capturedData.dateTime}</p>
+                                  <p><strong>Location:</strong> Lat ${capturedData.location.latitude}, Lng ${capturedData.location.longitude}</p>`;
+        });
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+
+
+
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// 🔹 Upload Captured or Uploaded Image to Firestore
 uploadBtn.addEventListener("click", async () => {
   const user = auth.currentUser;
   if (!user) {
